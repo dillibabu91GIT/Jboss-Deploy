@@ -1,1 +1,28 @@
-Env variable
+name: Deploy to JBoss
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Clone the Git repository
+        run: git clone https://github.com/dillibabu91GIT/Jboss-Deploy.git /tmp/Jboss-Deploy
+
+      - name: Set WAR file paths
+        run: |
+          # Find all .war files in the /tmp/Jboss-Deploy directory and set them as comma-separated values
+          WAR_FILES=$(find /tmp/Jboss-Deploy -type f -name "*.war" -exec echo -n "{}," \; | sed 's/,$//')
+          echo "GITHUB_ACTIONS_WAR_FILE=$WAR_FILES" >> $GITHUB_ENV
+
+      - name: Deploy
+        uses: ansible/ansible-playbook-action@v2
+        with:
+          playbook: jboss-deploy.yml
+
