@@ -1,0 +1,43 @@
+---
+- name: Deploy War Files to JBoss
+  hosts: target1
+  become: yes
+  vars:
+    github_token: "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"  # Replace with your GitHub token
+    war_files: "{{ ansible_env.GITHUB_ACTIONS_WAR_FILE }}"  # GitHub Actions environment variable for the war file
+    jboss_user: "{{ lookup('env', 'demo') | default('default_user') }}"  # JBoss username, default_user used if not provided
+    jboss_password: "{{ lookup('env', 'test123') | default('default_password') }}"  # JBoss password, default_password used if not provided
+
+  tasks:
+    - name: Clone the GitHub repository
+      git:
+        repo: https://github.com/dillibabu91GIT/Jboss-Deploy.git  # Replace with your GitHub repository URL
+        dest: /tmp/Jboss-Deploy
+        version: master
+        accept_hostkey: yes
+      register: git_clone_result
+
+    - debug:
+        var: git_clone_result
+
+    - name: Check for changes in the repository
+      git:
+        repo: /tmp/Jboss-Deploy
+        dest: /tmp/Jboss-Deploy
+        update: yes
+        accept_hostkey: yes
+      register: git_check_result
+
+    - debug:
+        var: git_check_result
+
+    - name: Copy War files to JBoss deployment directory
+      ansible.builtin.copy:
+        src: "/tmp/Jboss-Deploy/{{ item }}"
+        dest: "/opt/wildfly/standalone/deployments/"
+      loop: "{{ war_files.split(',') }}"
+      when: git_check_result.after != git_check_result.before
+
+    - name: Reload JBoss to deploy changes
+      command: "sh /opt/wildfly/bin/jboss-cli.sh --connect command=:reload"
+      when: git_check_result.after != git_check_result.before
