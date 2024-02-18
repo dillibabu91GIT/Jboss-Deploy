@@ -13,7 +13,7 @@
       git:
         repo: https://github.com/dillibabu91GIT/Jboss-Deploy.git  # Replace with your GitHub repository URL
         dest: /tmp/Jboss-Deploy
-        version: master
+        version: main
         accept_hostkey: yes
       register: git_clone_result
 
